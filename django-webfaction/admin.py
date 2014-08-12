@@ -10,6 +10,8 @@ class EmailOptions (admin.ModelAdmin):
 
 class LogOptions (admin.ModelAdmin):
     name="Email"
+    change_list_template = 'log_change_list.html'
+    change_form_template = 'log_change_form.html'
     list_display = ('action', 'user', 'timestamp', )
     list_filter = ('user', 'timestamp', )
     
