@@ -6,6 +6,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.cache import never_cache
+from django.contrib import messages 
 
 from forms import EmailForm
 from utils import generate_mailbox_name
@@ -62,19 +63,19 @@ def email_changeform(request, id=None):
             else:
                 # Editing an existing email
                 change = True
-                messages = []
+                msgs = []
                 update_email = False
                 if f['autoresponder_on']!=f['autoresponder_on_prev']:
-                    messages.append("Autoresponder Status for %s changed to %s" % (f['email_address'], f['autoresponder_on']))
+                    msgs.append("Autoresponder Status for %s changed to %s" % (f['email_address'], f['autoresponder_on']))
                     update_email = True
                 if f['autoresponder_subject']!=f['autoresponder_subject_prev']:
-                    messages.append("Autoresponder Subject for %s changed from '%s' to '%s'" % (f['email_address'], f['autoresponder_subject_prev'], f['autoresponder_subject']))
+                    msgs.append("Autoresponder Subject for %s changed from '%s' to '%s'" % (f['email_address'], f['autoresponder_subject_prev'], f['autoresponder_subject']))
                     update_email = True
                 if f['autoresponder_message']!=f['autoresponder_message_prev']:
-                    messages.append("Autoresponder Message for %s changed from '%s' to '%s'" % (f['email_address'], f['autoresponder_message_prev'], f['autoresponder_message']))
+                    msgs.append("Autoresponder Message for %s changed from '%s' to '%s'" % (f['email_address'], f['autoresponder_message_prev'], f['autoresponder_message']))
                     update_email = True
                 if f['redirect']!=f['redirect_prev']:
-                    messages.append("Redirect Address for %s changed from '%s' to '%s'" % (f['email_address'], f['redirect_prev'], f['redirect']))
+                    msgs.append("Redirect Address for %s changed from '%s' to '%s'" % (f['email_address'], f['redirect_prev'], f['redirect']))
                     update_email = True
                 if update_email:
                     mailbox_name = f.get('mailbox_prev', None)
@@ -83,11 +84,11 @@ def email_changeform(request, id=None):
                 if f['enable_spam_protection']!=f['enable_spam_protection_prev']:
                     try:
                         server.update_mailbox(session_id, mailbox_name, f['enable_spam_protection'])
-                        messages.append("Spam Protection Status for %s changed to %s" % (f['enable_spam_protection'], f['email_address']))
+                        msgs.append("Spam Protection Status for %s changed to %s" % (f['enable_spam_protection'], f['email_address']))
                     except xmlrpclib.Fault: #Probably means this is a redirect only address
-                        messages.append("Error. Can only change spam protection status on addresses with their own mailbox")
-                for msg in messages:
-                    request.user.message_set.create(message=msg)
+                        msgs.append("Error. Can only change spam protection status on addresses with their own mailbox")
+                for msg in msgs:
+                    messages.info(request, msg)
                     l = Log(user=request.user, action=msg)
                     l.save()
             return HttpResponseRedirect('..')
